@@ -1,0 +1,71 @@
+name: Create Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+
+jobs:
+  release:
+    name: Build and Release EXE
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+        fetch-depth: 0
+
+    - name: Cache Library
+      uses: actions/cache@v4
+      with:
+        path: Library
+        key: Library-Release-${{ hashFiles('Assets/**', 'ProjectSettings/**') }}
+        restore-keys: |
+          Library-Release-
+
+    - name: Build with Unity
+      uses: game-ci/unity-builder@v4
+      env:
+        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+        UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      with:
+        targetPlatform: StandaloneWindows64
+        buildsPath: Builds
+        buildMethod: BuildManager.BuildWindowsEXE
+
+    - name: Compress Build
+      run: |
+        $version = "${{ github.ref }}" -replace "refs/tags/", ""
+        Compress-Archive -Path "Builds/Protobot-Rebuilt_Data", "Builds/Protobot-Rebuilt.exe" -DestinationPath "Protobot-Rebuilt-$version.zip" -Force
+      shell: pwsh
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: Protobot-Rebuilt-*.zip
+        draft: false
+        prerelease: false
+        body: |
+          ## Protobot-Rebuilt Release
+          
+          **Version:** ${{ github.ref }}
+          
+          Download the build ZIP file below and extract it to play.
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Protobot-Rebuilt-Release
+        path: Protobot-Rebuilt-*.zip
+        retention-days: 90

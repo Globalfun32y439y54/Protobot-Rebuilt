@@ -1,28 +1,29 @@
-name: Unity Build
+name: Build Protobot-Rebuilt
 
 on:
   push:
-    branches:
-      - main # or your main branch
+    branches: [ main, develop ]
   pull_request:
-    branches:
-      - main # or your main branch
+    branches: [ main, develop ]
+  workflow_dispatch:
 
 jobs:
   build-windows:
-    name: Build Windows
+    name: Build Windows EXE
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           lfs: true
+          fetch-depth: 0
 
       - name: Cache Library
         uses: actions/cache@v4
         with:
           path: Library
-          key: Library-Windows-${{ github.sha }}
+          key: Library-Windows-${{ hashFiles('Assets/**', 'ProjectSettings/**') }}
           restore-keys: |
             Library-Windows-
 
@@ -34,10 +35,12 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           targetPlatform: StandaloneWindows64
-          unityVersion: 2021.3.5f1
+          buildsPath: Builds
+          buildMethod: BuildManager.BuildWindowsEXE
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Build-StandaloneWindows64
-          path: build/StandaloneWindows64
+          name: Protobot-Rebuilt-Windows
+          path: Builds/
+          retention-days: 30
