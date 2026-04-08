@@ -37,6 +37,7 @@ jobs:
           targetPlatform: StandaloneWindows64
           buildsPath: Builds
           buildMethod: BuildManager.BuildWindowsEXE
+          unityVersion: 2021.3.5f1
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
