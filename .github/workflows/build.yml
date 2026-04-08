@@ -35,7 +35,7 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           targetPlatform: StandaloneWindows64
-          buildsPath: Builds
+          projectPath: .
           buildMethod: BuildManager.BuildWindowsEXE
           unityVersion: 2021.3.5f1
 
