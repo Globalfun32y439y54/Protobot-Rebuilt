@@ -9,8 +9,8 @@ on:
 
 jobs:
   build-windows:
-    name: Build Windows EXE
-    runs-on: ubuntu-latest
+    name: Build Windows
+    runs-on: windows-latest
     
     steps:
       - name: Checkout Repository
@@ -24,12 +24,6 @@ jobs:
         with:
           path: Library
           key: Library-Windows-${{ hashFiles('Assets/**', 'ProjectSettings/**') }}
-          restore-keys: |
-            Library-Windows-
-
-      # This fixes permission issues that often cause crashes on Linux runners
-      - name: Fix Permissions
-        run: sudo chown -R $USER:$USER .
 
       - name: Build Unity Project
         uses: game-ci/unity-builder@v4
@@ -42,13 +36,16 @@ jobs:
           projectPath: .
           buildMethod: BuildManager.BuildWindowsEXE
           unityVersion: 2021.3.5f1
-          # -nographics prevents crashes on headless runners
-          # -no-out-of-process-build can stabilize memory management in 2021.3 LTS
-          customParameters: -nographics -no-out-of-process-build
+          customParameters: -nographics
+      
+      - name: Build Installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "BuildScripts/installer_script.iss"
 
-      - name: Upload Build Artifacts
+      - name: Upload Installer Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Protobot-Rebuilt-Windows
-          path: Builds/
+          name: Protobot-Installer-Windows
+          path: Output/Protobot-Rebuilt-Setup.exe
           retention-days: 30
